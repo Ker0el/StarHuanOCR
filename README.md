@@ -45,7 +45,7 @@ Windows 截图 OCR 工具 · 中文离线识别 · 免费开源
 
 ## 下载安装
 
-到 [Releases](../../releases) 下载 `星幻OCR_Setup_v*.exe`，双击安装，**无需管理员权限**，默认装到 `%LOCALAPPDATA%\Programs\星幻OCR`，带桌面快捷方式与卸载项。
+到 [Releases](../../releases) 下载 `StarHuanOCR_Setup_v*.exe`，双击安装，**无需管理员权限**，默认装到 `%LOCALAPPDATA%\Programs\星幻OCR`，带桌面快捷方式与卸载项。
 
 也可以直接用绿色版：解压后双击 `StarHuanOCR.exe`。
 
