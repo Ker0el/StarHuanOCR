@@ -4,7 +4,9 @@ from __future__ import annotations
 from dataclasses import replace
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QFont
+from pathlib import Path
+
+from PySide6.QtGui import QFont, QPainter, QPainterPath, QPixmap
 from PySide6.QtWidgets import (
     QComboBox,
     QFormLayout,
@@ -58,6 +60,20 @@ QComboBox { background: rgba(0,0,0,90); color: #f2f2f2; border: 1px solid rgba(2
             border-radius: 6px; padding: 3px 8px; }
 QComboBox QAbstractItemView { background: #262626; color: #f2f2f2; }
 """
+
+
+def _rounded(pixmap: QPixmap, radius: int) -> QPixmap:
+    """给白底二维码做圆角，避免在深色界面里出现生硬的白方块。"""
+    rounded = QPixmap(pixmap.size())
+    rounded.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(rounded)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    path = QPainterPath()
+    path.addRoundedRect(0, 0, pixmap.width(), pixmap.height(), radius, radius)
+    painter.setClipPath(path)
+    painter.drawPixmap(0, 0, pixmap)
+    painter.end()
+    return rounded
 
 
 def make_switch() -> "SwitchButton":
@@ -186,6 +202,23 @@ class SettingsWindow(QWidget):
                 ],
             )
         )
+        self.reward_label = QLabel()
+        reward_path = Path(__file__).resolve().parents[2] / "assets" / "reward.jpg"
+        if reward_path.exists():
+            pixmap = QPixmap(str(reward_path))
+            if not pixmap.isNull():
+                scaled = pixmap.scaled(
+                    180, 180, Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+                self.reward_label.setPixmap(_rounded(scaled, 10))
+        self.reward_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        reward_hint = QLabel("如果帮到了你，可以扫码赞赏一下")
+        reward_hint.setObjectName("hint")
+        reward_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._reward_group = self._group("赞赏", [("", self.reward_label), ("", reward_hint)])
+
         self.author_label = QLabel(
             '作者：<a href="https://space.bilibili.com/177308205" '
             'style="color:#4cc2ff; text-decoration:none;">星空</a>'
@@ -194,6 +227,7 @@ class SettingsWindow(QWidget):
         self.author_label.setTextFormat(Qt.TextFormat.RichText)
         self.author_label.setOpenExternalLinks(True)
         self.author_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        root.addWidget(self._reward_group)
         root.addStretch(1)
         root.addWidget(self.author_label)
 

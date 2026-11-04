@@ -113,3 +113,11 @@ def test_api_key_change_is_saved(qtbot, tmp_path, monkeypatch):
     w.api_key_edit.setText("sk-xyz")
     w.api_key_edit.editingFinished.emit()
     assert "sk-xyz" in saved
+
+
+def test_settings_shows_reward_qr(qtbot):
+    w = SettingsWindow()
+    qtbot.addWidget(w)
+    pixmap = w.reward_label.pixmap()
+    assert pixmap is not None
+    assert pixmap.isNull() is False

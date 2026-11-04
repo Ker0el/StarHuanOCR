@@ -38,6 +38,7 @@ datas += [
     (os.path.join(ROOT, "models"), "models"),
     (os.path.join(ROOT, "assets", "icon.ico"), "assets"),
     (os.path.join(ROOT, "assets", "fonts"), "assets/fonts"),
+    (os.path.join(ROOT, "assets", "reward.jpg"), "assets"),
 ]
 
 a = Analysis(
