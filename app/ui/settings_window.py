@@ -48,7 +48,8 @@ class HotkeyEdit(QLineEdit):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
     def keyPressEvent(self, event) -> None:  # noqa: N802
-        text = event.text().strip().upper()
+        # 不能依赖 event.text()：Windows 下 Ctrl+字母 的 text() 是控制字符（如 ），
+        # 只有按虚拟键码取名才可靠。
         key = event.key()
         parts: list[str] = []
         mods = event.modifiers()
@@ -63,8 +64,10 @@ class HotkeyEdit(QLineEdit):
 
         if Qt.Key.Key_F1 <= key <= Qt.Key.Key_F12:
             parts.append(f"F{key - Qt.Key.Key_F1 + 1}")
-        elif text.isalnum() and len(text) == 1:
-            parts.append(text)
+        elif Qt.Key.Key_A <= key <= Qt.Key.Key_Z:
+            parts.append(chr(ord("A") + key - Qt.Key.Key_A))
+        elif Qt.Key.Key_0 <= key <= Qt.Key.Key_9:
+            parts.append(chr(ord("0") + key - Qt.Key.Key_0))
         else:
             return
 
@@ -150,6 +153,16 @@ class SettingsWindow(QWidget):
     def open(self, settings: Config, device: str) -> None:
         # 拷贝一份再编辑，避免直接改动调用方持有的对象，改动通过 changed 信号回传
         self._config = replace(settings)
+        widgets = (
+            self.auto_copy_switch,
+            self.show_result_switch,
+            self.prefer_gpu_switch,
+            self.autostart_switch,
+            self.update_switch,
+            self.precision_combo,
+        )
+        for widget in widgets:
+            widget.blockSignals(True)
         self.hotkey_edit.setText(settings.hotkey)
         self.auto_copy_switch.setChecked(settings.auto_copy)
         self.show_result_switch.setChecked(settings.show_result)
@@ -158,6 +171,8 @@ class SettingsWindow(QWidget):
         self.update_switch.setChecked(settings.check_updates)
         index = self.precision_combo.findData(settings.precision)
         self.precision_combo.setCurrentIndex(max(index, 0))
+        for widget in widgets:
+            widget.blockSignals(False)
         self.device_label.setText(device.upper())
         self.show()
         self.raise_()

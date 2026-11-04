@@ -86,6 +86,9 @@ class OcrEngine:
             "Rec.engine_type": EngineType.ONNXRUNTIME,
             "Rec.model_path": str(rec_path),
             "Global.log_level": "error",
+            # 截图场景不需要 180° 方向分类；关掉可避免运行时下载 cls 模型，
+            # 否则离线包里每次识别都会因缺 cls 模型而失败。
+            "Global.use_cls": False,
             "EngineConfig.onnxruntime.intra_op_num_threads": CPU_THREADS,
             "EngineConfig.onnxruntime.use_cuda": device == "cuda",
             "EngineConfig.onnxruntime.use_dml": device == "dml",
@@ -126,11 +129,13 @@ class OcrEngine:
 class _OcrThread(QThread):
     result_ready = Signal(object)
     error = Signal(str)
+    ready = Signal()
 
     def __init__(self, factory: Callable[[], OcrEngine]) -> None:
         super().__init__()
         self._factory = factory
         self._queue: queue.Queue = queue.Queue()
+        self.label = ""
 
     def submit(self, image: np.ndarray) -> None:
         self._queue.put(image)
@@ -142,6 +147,8 @@ class _OcrThread(QThread):
         try:
             engine = self._factory()
             engine.warmup()
+            self.label = f"{engine.device}/{engine.tier}"
+            self.ready.emit()
         except Exception as exc:  # 引擎初始化失败必须让上层看见
             self.error.emit(f"OCR 引擎不可用：{exc}")
             return
@@ -167,12 +174,38 @@ class OcrWorker(QObject):
         super().__init__(parent)
         self._thread = _OcrThread(factory)
         self._thread.result_ready.connect(self.finished)
-        self._thread.error.connect(self.failed)
+        self._thread.error.connect(self._on_error)
+        self._thread.ready.connect(self._on_ready)
+        self._failed = False
+        self._ready = False
+
+    @property
+    def is_failed(self) -> bool:
+        return self._failed
+
+    @property
+    def is_ready(self) -> bool:
+        return self._ready
+
+    def mark_failed(self) -> None:
+        """外部（或测试）标记引擎不可用，避免继续往死线程投递。"""
+        self._failed = True
+        self._ready = False
+
+    def _on_error(self, message: str) -> None:
+        self.mark_failed()
+        self.failed.emit(message)
+
+    def _on_ready(self) -> None:
+        self._ready = True
+        self.ready.emit(self._thread.label)
 
     def start(self) -> None:
         self._thread.start()
 
     def submit(self, image: np.ndarray) -> None:
+        if self._failed:
+            return
         self._thread.submit(image)
 
     def stop(self) -> None:

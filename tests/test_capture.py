@@ -39,3 +39,12 @@ def test_crop_does_not_alias_source_image(qapp):
     assert int(out[0, 0, 0]) == 10
     assert int(out[0, 0, 1]) == 20
     assert int(out[0, 0, 2]) == 30
+
+
+def test_screen_physical_rect_scales_by_dpr():
+    from app.capture import screen_physical_rect
+
+    virtual = QRect(0, 0, 5120, 1440)
+    assert screen_physical_rect(QRect(0, 0, 2560, 1440), 1.0, virtual) == QRect(0, 0, 2560, 1440)
+    # 150% 缩放下 Qt 报的逻辑几何是 1707×960，物理像素是 2560×1440
+    assert screen_physical_rect(QRect(1707, 0, 1707, 960), 1.5, virtual) == QRect(2560, 0, 2560, 1440)

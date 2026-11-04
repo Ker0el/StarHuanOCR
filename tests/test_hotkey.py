@@ -40,3 +40,11 @@ def test_register_returns_false_when_win32_fails(monkeypatch, qapp):
     mgr = HotkeyManager()
     monkeypatch.setattr(mgr, "_call_register", lambda mods, vk: 0)
     assert mgr.register("Ctrl+Alt+Q") is False
+
+
+def test_resolve_hotkey_falls_back_on_invalid_config():
+    from app.hotkey import resolve_hotkey
+
+    assert resolve_hotkey("Ctrl+Alt+Q") == "Ctrl+Alt+Q"
+    assert resolve_hotkey("Ctrl+Space") == "F1"
+    assert resolve_hotkey("") == "F1"

@@ -47,6 +47,9 @@ class Pipeline(QObject):
 
     # --- 触发 ---
     def trigger_capture(self) -> None:
+        if getattr(self.worker, "is_failed", False):
+            self.status_changed.emit("OCR 引擎不可用，无法截图识别。请检查 models 目录后重启程序。")
+            return
         if self.overlay.is_active:
             return
         self.window.hide()
@@ -65,6 +68,9 @@ class Pipeline(QObject):
         self._begin_ocr(image, rect)
 
     def _begin_ocr(self, image, rect: QRect) -> None:
+        if getattr(self.worker, "is_failed", False):
+            self.status_changed.emit("OCR 引擎不可用。")
+            return
         self._anchor = QRect(rect)
         self.window.hide()
         if self._chip_timer is not None:

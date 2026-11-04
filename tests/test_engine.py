@@ -36,3 +36,11 @@ def test_unknown_precision_falls_back_to_auto():
 def test_engine_raises_clear_error_when_models_missing(tmp_path):
     with pytest.raises(FileNotFoundError):
         OcrEngine(tmp_path, device="cpu", tier="small")
+
+
+def test_engine_disables_text_direction_classifier(qapp):
+    """不做方向分类：关掉可避免运行时下载 cls 模型，也让离线包可识别。"""
+    from app.ocr.engine import DEFAULT_MODELS_DIR
+
+    engine = OcrEngine(DEFAULT_MODELS_DIR, device="cpu", tier="small")
+    assert engine._engine.cfg["Global"]["use_cls"] is False

@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QApplication
 
 from app import APP_NAME, APP_VERSION
 from app.config import load_config, save_config
-from app.hotkey import HotkeyManager
+from app.hotkey import HotkeyManager, resolve_hotkey
 from app.ocr.engine import (
     DEFAULT_MODELS_DIR,
     OcrEngine,
@@ -55,7 +55,16 @@ def selftest() -> int:
         tier = choose_tier("fast", device)
         engine = OcrEngine(DEFAULT_MODELS_DIR, device=device, tier=tier)
         engine.warmup()
-        result = f"ok device={engine.device} tier={engine.tier}"
+        use_cls = getattr(engine._engine, "use_cls", None)
+        result = f"ok device={engine.device} tier={engine.tier} use_cls={use_cls}"
+        # 若同目录放了自检图片，再跑一次真实识别，验证离线可识别
+        sample = out.parent / "selftest_image.png"
+        if sample.exists():
+            import cv2
+
+            image = cv2.imread(str(sample))
+            recognized = engine.recognize(image)
+            result += f" text_len={len(recognized.text)}"
         code = 0
     except Exception as exc:
         result = f"failed: {exc!r}"
@@ -65,6 +74,11 @@ def selftest() -> int:
     except OSError:
         pass
     return code
+
+
+def wire_hotkey(hotkey: HotkeyManager, pipeline: Pipeline) -> None:
+    """始终连接：即便启动时注册失败，之后在设置里改键成功也能用。"""
+    hotkey.activated.connect(pipeline.trigger_capture)
 
 
 def main() -> int:
@@ -78,6 +92,7 @@ def main() -> int:
 
     apply_dark_theme()
     config = load_config()
+    config.hotkey = resolve_hotkey(config.hotkey)
 
     worker = OcrWorker(lambda: build_engine(config))
     overlay = OverlayController()
@@ -87,8 +102,9 @@ def main() -> int:
     pipeline = Pipeline(config, worker, overlay, window, chip, tray)
 
     hotkey = HotkeyManager()
+    wire_hotkey(hotkey, pipeline)
     if hotkey.register(config.hotkey):
-        hotkey.activated.connect(pipeline.trigger_capture)
+        pass
     else:
         tray.notify(APP_NAME, f"快捷键 {config.hotkey} 注册失败，可能已被占用，请在设置里换一个。")
 
@@ -124,6 +140,12 @@ def main() -> int:
     settings_window.hotkey_rejected.connect(lambda msg: tray.notify(APP_NAME, f"快捷键无效：{msg}"))
     tray.settings_requested.connect(open_settings)
 
+    tray.update_requested.connect(
+        lambda: (
+            tray.notify(APP_NAME, "正在检查更新…", 1500),
+            checker.check_async(APP_VERSION),
+        )
+    )
     tray.capture_requested.connect(pipeline.trigger_capture)
     tray.quit_requested.connect(app.quit)
     instance.activated.connect(pipeline.trigger_capture)

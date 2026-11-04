@@ -33,3 +33,15 @@ def test_chip_not_left_visible_when_result_is_fast(qtbot):
     pipe._on_result(OcrResult(text="你好", elapsed_ms=20, device="cpu", line_count=1))
     qtbot.wait(250)
     assert pipe.chip.isVisible() is False
+
+
+def test_trigger_capture_refused_when_worker_failed(qtbot, monkeypatch):
+    pipe = make_pipeline()
+    pipe.worker.mark_failed()
+    started = []
+    monkeypatch.setattr(pipe.overlay, "start", lambda: started.append(1))
+    messages = []
+    pipe.status_changed.connect(messages.append)
+    pipe.trigger_capture()
+    assert started == []
+    assert messages

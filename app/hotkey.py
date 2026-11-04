@@ -68,6 +68,15 @@ def parse_hotkey(text: str) -> tuple[int, int]:
     return modifiers, vk
 
 
+def resolve_hotkey(text: str, default: str = "F1") -> str:
+    """配置里的热键可能被手改成非法值：校验不过就回落到默认键。"""
+    try:
+        parse_hotkey(text)
+    except (TypeError, ValueError):
+        return default
+    return text
+
+
 def hotkey_to_string(mods: int, vk: int) -> str:
     """把 (modifiers, vk) 还原成可读字符串，顺序 Ctrl→Alt→Shift→Win。"""
     pieces = [name for name, bit in _MODIFIER_ORDER if mods & bit]

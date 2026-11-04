@@ -23,6 +23,22 @@ def virtual_desktop_rect() -> QRect:
     )
 
 
+def screen_physical_rect(geometry: QRect, dpr: float, virtual: QRect) -> QRect:
+    """把 Qt 的逻辑几何换算到画布的物理像素坐标。
+
+    进程是 per-monitor DPI aware 的，GetSystemMetrics 给的是物理像素，
+    而 QScreen.geometry() 给的是逻辑坐标（150% 缩放下是物理尺寸的 2/3）。
+    不做这个换算，drawImage 会按源图 DPR 把内容缩到逻辑尺寸，
+    等于把截图降采样后再送去 OCR。
+    """
+    return QRect(
+        round((geometry.x() - virtual.x()) * dpr),
+        round((geometry.y() - virtual.y()) * dpr),
+        round(geometry.width() * dpr),
+        round(geometry.height() * dpr),
+    )
+
+
 def grab_virtual_desktop() -> QImage:
     """逐屏抓取并合成到一张覆盖整个虚拟桌面的位图。"""
     rect = virtual_desktop_rect()
@@ -36,7 +52,9 @@ def grab_virtual_desktop() -> QImage:
             shot = screen.grabWindow(0)
             if shot.isNull():
                 continue
-            painter.drawImage(geo.x() - rect.x(), geo.y() - rect.y(), shot.toImage())
+            image = shot.toImage()
+            target = screen_physical_rect(geo, screen.devicePixelRatio(), rect)
+            painter.drawImage(target, image, image.rect())
     finally:
         painter.end()
     return canvas

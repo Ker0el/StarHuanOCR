@@ -41,6 +41,7 @@ def load_icon() -> QIcon:
 class TrayIcon(QObject):
     capture_requested = Signal()
     settings_requested = Signal()
+    update_requested = Signal()
     quit_requested = Signal()
 
     def __init__(self, hotkey_text: str = "F1", parent: QObject | None = None) -> None:
@@ -53,14 +54,17 @@ class TrayIcon(QObject):
 
         self._capture_action = QAction(self)
         self._settings_action = QAction("设置", self)
+        self._update_action = QAction("检查更新", self)
         self._quit_action = QAction("退出", self)
         self._menu.addAction(self._capture_action)
         self._menu.addAction(self._settings_action)
+        self._menu.addAction(self._update_action)
         self._menu.addSeparator()
         self._menu.addAction(self._quit_action)
 
         self._capture_action.triggered.connect(self.capture_requested)
         self._settings_action.triggered.connect(self.settings_requested)
+        self._update_action.triggered.connect(self.update_requested)
         self._quit_action.triggered.connect(self.quit_requested)
 
         self._tray.setContextMenu(self._menu)

@@ -30,3 +30,19 @@
 ## 开发中发现并修复的真实缺陷
 
 - `crop_to_numpy` 曾返回指向已释放 QImage 缓冲区的 numpy 视图，导致真实桌面截图 OCR 出乱码甚至访问冲突。已改为显式 copy，并加 `test_crop_does_not_alias_source_image` 防回归。
+
+## 代码审查后的修复（同一分支）
+
+| 严重度 | 问题 | 修复 | 验证 |
+|---|---|---|---|
+| Critical | 打包版缺 cls 模型，首次识别会联网下载、离线则失败 | 引擎关掉方向分类 `Global.use_cls=False`（截图场景不需要） | `test_engine_disables_text_direction_classifier`；打包版 `--selftest` 输出 `use_cls=False text_len=11` |
+| Critical | 引擎初始化失败后线程死亡，之后按 `F1` 永远卡在加载胶囊 | `OcrWorker` 记录 failed 状态；`Pipeline` 在 failed 时拒绝截图并提示 | `test_worker_marks_failed_and_stays_dead`、`test_trigger_capture_refused_when_worker_failed` |
+| Important | 启动时热键注册失败后，改键永远不会生效 | `wire_hotkey()` 无条件连接信号 | `test_wire_hotkey_connects_even_when_registration_failed` |
+| Important | 设置页录不到 Ctrl+字母（`event.text()` 是控制字符） | 改用 `event.key()` 映射 | `test_hotkey_edit_records_ctrl_letter_via_keycode` |
+| Important | 非 100% 缩放下截图被降采样 | `screen_physical_rect()` 按 dpr 换算到物理像素 | `test_screen_physical_rect_scales_by_dpr` |
+| Minor | 打开设置页就写自启注册表 | `open()` 期间 `blockSignals` | `test_open_does_not_write_autostart` |
+| Minor | config 里非法热键导致启动即退出 | `resolve_hotkey()` 回落 `F1` | `test_resolve_hotkey_falls_back_on_invalid_config` |
+| Minor | 托盘缺「检查更新」 | 已加菜单项 | 手工 |
+| Minor | README 误称右键关闭结果窗 | 已改正 | — |
+
+仍未处理（记录在案）：热键冲突时设置页不标红；识别中切换引擎会让 UI 最多等 3 s；设置页缺「关于」分组与手动检查更新按钮。
