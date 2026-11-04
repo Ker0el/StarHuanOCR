@@ -46,3 +46,15 @@
 | Minor | README 误称右键关闭结果窗 | 已改正 | — |
 
 仍未处理（记录在案）：热键冲突时设置页不标红；识别中切换引擎会让 UI 最多等 3 s；设置页缺「关于」分组与手动检查更新按钮。
+
+## GPU 版验证（2026-11-04）
+
+打包 GPU 版（onnxruntime-directml）后用真实图片自检：
+
+```
+ok device=dml tier=medium use_cls=False text_len=11
+```
+
+- 设备正确选到 DirectML，档位随 `auto` 自动升到 medium
+- 包体 552 MB
+- 过程中发现：PyInstaller 的 onnxruntime 钩子不带 `DirectML.dll`，且 `dist` 里的旧 DLL 会让 GPU 版静默退回 CPU。已在 `build.ps1` 里加「打包前清空 dist + 打包后补拷 DirectML.dll」。

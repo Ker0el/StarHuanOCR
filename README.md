@@ -67,6 +67,13 @@ powershell -ExecutionPolicy Bypass -File build\build.ps1 -Gpu     # GPU 版（Di
 
 产物在 `dist\StarHuanOCR\`。
 
+- CPU 版约 510 MB，GPU 版约 550 MB（含 DirectML.dll）
+- 打包前会先清空 `dist\StarHuanOCR`：残留的旧 onnxruntime DLL 会让 GPU 版静默退回 CPU
+
+## 字体
+
+界面使用思源黑体（Noto Sans SC），随包分发于 `assets/fonts/`，SIL Open Font License 1.1。
+
 ## 许可
 
 GPL-3.0。依赖：PySide6（LGPL-3.0）、PySide6-Fluent-Widgets（GPLv3）、RapidOCR（Apache-2.0）、ONNX Runtime（MIT）、PP-OCRv6 模型（Apache-2.0）。

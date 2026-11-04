@@ -6,6 +6,7 @@ import sys
 import time
 
 from PySide6.QtCore import QTimer
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication
 
 from app import APP_NAME, APP_VERSION
@@ -23,6 +24,7 @@ from app.overlay import OverlayController
 from app.pipeline import Pipeline
 from app.single_instance import SingleInstance
 from app.updater import UpdateChecker
+from app.ui.fonts import load_app_font
 from app.ui.icon import load_icon
 from app.ui.result_window import LoadingChip, ResultWindow
 from app.ui.settings_window import SettingsWindow
@@ -53,7 +55,7 @@ def selftest() -> int:
     out = Path(sys.executable).with_name("selftest.txt")
     try:
         device = choose_device(True, available_providers())
-        tier = choose_tier("fast", device)
+        tier = choose_tier("auto", device)
         engine = OcrEngine(DEFAULT_MODELS_DIR, device=device, tier=tier)
         engine.warmup()
         use_cls = getattr(engine._engine, "use_cls", None)
@@ -87,6 +89,9 @@ def main() -> int:
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     app.setWindowIcon(load_icon())
+    family = load_app_font()
+    app.setProperty("app_font_family", family)
+    app.setFont(QFont(family, 10))
 
     instance = SingleInstance()
     if not instance.try_acquire(APP_NAME):

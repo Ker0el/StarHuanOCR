@@ -154,7 +154,16 @@ class SettingsWindow(QWidget):
                 ],
             )
         )
+        self.author_label = QLabel(
+            '作者：<a href="https://space.bilibili.com/177308205" '
+            'style="color:#4cc2ff; text-decoration:none;">星空</a>'
+        )
+        self.author_label.setObjectName("hint")
+        self.author_label.setTextFormat(Qt.TextFormat.RichText)
+        self.author_label.setOpenExternalLinks(True)
+        self.author_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         root.addStretch(1)
+        root.addWidget(self.author_label)
 
         self.auto_copy_switch.checkedChanged.connect(lambda v: self._update(auto_copy=v))
         self.show_result_switch.checkedChanged.connect(lambda v: self._update(show_result=v))

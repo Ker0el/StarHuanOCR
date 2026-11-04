@@ -21,6 +21,13 @@ if ($Gpu) {
     & $Python -m pip install --quiet --upgrade onnxruntime==1.31.1
 }
 
+# COLLECT 不会清掉上一次的产物，残留的旧 onnxruntime DLL 会让 GPU 版静默退回 CPU
+$Dist = Join-Path $Root "dist\StarHuanOCR"
+if (Test-Path $Dist) {
+    Write-Host "==> 清理旧产物 $Dist"
+    Remove-Item $Dist -Recurse -Force
+}
+
 Write-Host "==> PyInstaller"
 & $Python -m PyInstaller `
     --noconfirm --clean `
@@ -28,4 +35,14 @@ Write-Host "==> PyInstaller"
     --workpath (Join-Path $Root "build\work") `
     (Join-Path $Root "build\StarHuanOCR.spec")
 
-Write-Host "==> 完成：$(Join-Path $Root 'dist\StarHuanOCR\StarHuanOCR.exe')"
+if ($Gpu) {
+    $Dml = Join-Path $Root ".venv\Lib\site-packages\onnxruntime\capi\DirectML.dll"
+    $Target = Join-Path $Root "dist\StarHuanOCR\_internal\onnxruntime\capi"
+    if ((Test-Path $Dml) -and (Test-Path $Target)) {
+        Copy-Item $Dml $Target -Force
+        Write-Host "==> 已补拷 DirectML.dll"
+    }
+}
+
+$Exe = Join-Path $Root "dist\StarHuanOCR\StarHuanOCR.exe"
+Write-Host "==> 完成：$Exe"

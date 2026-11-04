@@ -46,7 +46,9 @@ class ResultWindow(QWidget):
         self.setWindowIcon(load_icon())
 
         self.text_edit = QPlainTextEdit()
-        self.text_edit.setFont(QFont("Consolas", 10))
+        from app.ui.fonts import load_app_font
+
+        self.text_edit.setFont(QFont(load_app_font(), 10))
         self.text_edit.setPlaceholderText("未识别到文字")
         self.text_edit.setStyleSheet(
             "QPlainTextEdit { background: rgba(0,0,0,90); color: #f2f2f2;"

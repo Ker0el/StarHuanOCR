@@ -22,9 +22,22 @@ datas = [
     if "rapidocr" + os.sep + "models" not in item[0].replace("/", os.sep)
 ]
 
+# PyInstaller 的 onnxruntime 钩子不会带 DirectML.dll，GPU 版必须手动收集
+try:
+    import onnxruntime
+
+    capi = os.path.join(os.path.dirname(onnxruntime.__file__), "capi")
+    for dll_name in ("DirectML.dll", "onnxruntime_providers_shared.dll"):
+        dll_path = os.path.join(capi, dll_name)
+        if os.path.exists(dll_path):
+            binaries.append((dll_path, "onnxruntime/capi"))
+except ImportError:
+    pass
+
 datas += [
     (os.path.join(ROOT, "models"), "models"),
     (os.path.join(ROOT, "assets", "icon.ico"), "assets"),
+    (os.path.join(ROOT, "assets", "fonts"), "assets/fonts"),
 ]
 
 a = Analysis(

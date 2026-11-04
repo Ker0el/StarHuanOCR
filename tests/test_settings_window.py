@@ -84,3 +84,10 @@ def test_hotkey_edit_records_ctrl_space(qtbot):
         QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Space, Qt.KeyboardModifier.ControlModifier, " ")
     )
     assert recorded == ["Ctrl+Space"]
+
+
+def test_settings_shows_author_link(qtbot):
+    w = SettingsWindow()
+    qtbot.addWidget(w)
+    assert "space.bilibili.com/177308205" in w.author_label.text()
+    assert w.author_label.openExternalLinks() is True
