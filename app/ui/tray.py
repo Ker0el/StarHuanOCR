@@ -48,8 +48,14 @@ class TrayIcon(QObject):
         self._quit_action.triggered.connect(self.quit_requested)
 
         self._tray.setContextMenu(self._menu)
+        self._tray.activated.connect(self._on_activated)
         self.set_hotkey_text(hotkey_text)
         self._tray.show()
+
+    def _on_activated(self, reason) -> None:
+        # 左键单击托盘图标直接截图；右键交给 context menu
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            self.capture_requested.emit()
 
     def set_hotkey_text(self, text: str) -> None:
         self._capture_action.setText(f"截图识别（{text}）")
