@@ -21,6 +21,7 @@ from app.overlay import OverlayController
 from app.pipeline import Pipeline
 from app.single_instance import SingleInstance
 from app.ui.result_window import LoadingChip, ResultWindow
+from app.ui.settings_window import SettingsWindow
 from app.ui.theme import apply_dark_theme
 from app.ui.tray import TrayIcon
 
@@ -65,6 +66,38 @@ def main() -> int:
         hotkey.activated.connect(pipeline.trigger_capture)
     else:
         tray.notify(APP_NAME, f"快捷键 {config.hotkey} 注册失败，可能已被占用，请在设置里换一个。")
+
+    settings_window = SettingsWindow()
+
+    def open_settings() -> None:
+        device = choose_device(config.prefer_gpu, available_providers())
+        settings_window.open(config, device)
+
+    def on_settings_changed(updated) -> None:
+        if updated.hotkey != config.hotkey:
+            previous = config.hotkey
+            if hotkey.register(updated.hotkey):
+                config.hotkey = updated.hotkey
+            else:
+                hotkey.register(previous)
+                updated.hotkey = previous
+                tray.notify(APP_NAME, f"快捷键 {updated.hotkey} 被占用，已保留原键。")
+            tray.set_hotkey_text(config.hotkey)
+
+        if updated.precision != config.precision or updated.prefer_gpu != config.prefer_gpu:
+            config.precision = updated.precision
+            config.prefer_gpu = updated.prefer_gpu
+            pipeline.replace_worker(OcrWorker(lambda: build_engine(config)))
+            tray.notify(APP_NAME, "识别引擎已按新设置重启。", 2000)
+
+        config.auto_copy = updated.auto_copy
+        config.show_result = updated.show_result
+        config.autostart = updated.autostart
+        config.check_updates = updated.check_updates
+        save_config(config)
+    settings_window.changed.connect(on_settings_changed)
+    settings_window.hotkey_rejected.connect(lambda msg: tray.notify(APP_NAME, f"快捷键无效：{msg}"))
+    tray.settings_requested.connect(open_settings)
 
     tray.capture_requested.connect(pipeline.trigger_capture)
     tray.quit_requested.connect(app.quit)

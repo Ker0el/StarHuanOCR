@@ -31,6 +31,20 @@ class Pipeline(QObject):
         worker.finished.connect(self._on_result)
         worker.failed.connect(self._on_error)
 
+    def replace_worker(self, worker) -> None:
+        """换引擎（精度/GPU 开关变化）时重建工作线程。"""
+        if self.worker is not None:
+            try:
+                self.worker.finished.disconnect(self._on_result)
+                self.worker.failed.disconnect(self._on_error)
+            except (RuntimeError, TypeError):
+                pass
+            self.worker.stop()
+        self.worker = worker
+        worker.finished.connect(self._on_result)
+        worker.failed.connect(self._on_error)
+        worker.start()
+
     # --- 触发 ---
     def trigger_capture(self) -> None:
         if self.overlay.is_active:
