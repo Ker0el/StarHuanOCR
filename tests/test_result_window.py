@@ -125,3 +125,41 @@ def test_window_closes_when_deactivated(qtbot):
     assert w.isVisible() is True
     QApplication.sendEvent(w, QEvent(QEvent.Type.WindowDeactivate))
     assert w.isVisible() is False
+
+
+def test_translate_button_hidden_until_available(qtbot):
+    w = ResultWindow()
+    qtbot.addWidget(w)
+    w.show_result("Hello", QRect(0, 0, 10, 10))
+    assert w.translate_button.isHidden() is True
+    w.set_translation_available(True)
+    assert w.translate_button.isHidden() is False
+
+
+def test_translate_button_emits_signal(qtbot):
+    w = ResultWindow()
+    qtbot.addWidget(w)
+    w.show_result("Hello", QRect(0, 0, 10, 10))
+    w.set_translation_available(True)
+    calls = []
+    w.translate_requested.connect(lambda: calls.append(1))
+    w.translate_button.click()
+    assert calls == [1]
+
+
+def test_show_translation_fills_view(qtbot):
+    w = ResultWindow()
+    qtbot.addWidget(w)
+    w.show_result("Hello", QRect(0, 0, 10, 10))
+    w.show_translation("你好")
+    assert w.translation_view.toPlainText() == "你好"
+    assert w.translation_view.isHidden() is False
+
+
+def test_new_result_hides_previous_translation(qtbot):
+    w = ResultWindow()
+    qtbot.addWidget(w)
+    w.show_result("Hello", QRect(0, 0, 10, 10))
+    w.show_translation("你好")
+    w.show_result("World", QRect(0, 0, 10, 10))
+    assert w.translation_view.isHidden() is True

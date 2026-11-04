@@ -117,6 +117,19 @@ class SettingsWindow(QWidget):
         self.precision_combo.addItem("快速（small）", "fast")
         self.precision_combo.addItem("高精度（medium）", "high")
 
+        self.translation_switch = SwitchButton()
+        self.api_key_edit = QLineEdit()
+        self.api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        self.api_key_edit.setPlaceholderText("sk-...")
+        self.auto_translate_switch = SwitchButton()
+
+        self.translation_details = QWidget()
+        details_form = QFormLayout(self.translation_details)
+        details_form.setContentsMargins(0, 0, 0, 0)
+        details_form.addRow(QLabel("DeepSeek API Key"), self.api_key_edit)
+        details_form.addRow(QLabel("自动翻译"), self.auto_translate_switch)
+        self.translation_details.setVisible(False)
+
         self.device_label = QLabel("CPU")
         self.version_label = QLabel(f"{APP_NAME} v{APP_VERSION}")
         self.version_label.setObjectName("hint")
@@ -131,6 +144,15 @@ class SettingsWindow(QWidget):
                 [
                     ("自动复制到剪贴板", self.auto_copy_switch),
                     ("识别后弹出结果窗口", self.show_result_switch),
+                ],
+            )
+        )
+        root.addWidget(
+            self._group(
+                "翻译",
+                [
+                    ("启用翻译（DeepSeek）", self.translation_switch),
+                    ("", self.translation_details),
                 ],
             )
         )
@@ -170,6 +192,11 @@ class SettingsWindow(QWidget):
         self.prefer_gpu_switch.checkedChanged.connect(lambda v: self._update(prefer_gpu=v))
         self.autostart_switch.checkedChanged.connect(self._on_autostart)
         self.update_switch.checkedChanged.connect(lambda v: self._update(check_updates=v))
+        self.translation_switch.checkedChanged.connect(self._on_translation_toggled)
+        self.auto_translate_switch.checkedChanged.connect(lambda v: self._update(auto_translate=v))
+        self.api_key_edit.editingFinished.connect(
+            lambda: self._update(deepseek_api_key=self.api_key_edit.text().strip())
+        )
         self.precision_combo.currentIndexChanged.connect(
             lambda _: self._update(precision=self.precision_combo.currentData())
         )
@@ -179,6 +206,8 @@ class SettingsWindow(QWidget):
         # 拷贝一份再编辑，避免直接改动调用方持有的对象，改动通过 changed 信号回传
         self._config = replace(settings)
         widgets = (
+            self.translation_switch,
+            self.auto_translate_switch,
             self.auto_copy_switch,
             self.show_result_switch,
             self.prefer_gpu_switch,
@@ -194,10 +223,14 @@ class SettingsWindow(QWidget):
         self.prefer_gpu_switch.setChecked(settings.prefer_gpu)
         self.autostart_switch.setChecked(settings.autostart)
         self.update_switch.setChecked(settings.check_updates)
+        self.translation_switch.setChecked(settings.translation_enabled)
+        self.auto_translate_switch.setChecked(settings.auto_translate)
+        self.api_key_edit.setText(settings.deepseek_api_key)
         index = self.precision_combo.findData(settings.precision)
         self.precision_combo.setCurrentIndex(max(index, 0))
         for widget in widgets:
             widget.blockSignals(False)
+        self.translation_details.setVisible(settings.translation_enabled)
         self.device_label.setText(device_label_text(device, settings.prefer_gpu))
         self.show()
         self.raise_()
@@ -236,6 +269,10 @@ class SettingsWindow(QWidget):
             setattr(self._config, key, value)
         save_config(self._config)
         self.changed.emit(self._config)
+
+    def _on_translation_toggled(self, enabled: bool) -> None:
+        self.translation_details.setVisible(enabled)
+        self._update(translation_enabled=enabled)
 
     def _on_autostart(self, enabled: bool) -> None:
         set_autostart(enabled)

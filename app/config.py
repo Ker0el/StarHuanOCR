@@ -22,6 +22,9 @@ class Config:
     last_update_check: float = 0.0
     latest_known_version: str = ""
     first_run_done: bool = False
+    translation_enabled: bool = False
+    deepseek_api_key: str = ""
+    auto_translate: bool = False
 
 
 def load_config(path: Path = CONFIG_PATH) -> Config:

@@ -33,7 +33,9 @@ Windows 截图取字工具。按下 **F1**，框选屏幕上任意区域，识�
 | 优先使用 GPU | 开 | 关闭则强制 CPU |
 | 识别精度 | 自动 | 自动 = GPU 用 medium、CPU 用 small |
 | 开机自启 | 关 | 写入 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` |
-| 检查更新 | 开 | 唯一联网行为，可关闭 |
+| 检查更新 | 开 | 可关闭 |
+| 启用翻译（DeepSeek） | 关 | 开启后结果窗出现「翻译」按钮；需填 DeepSeek API Key |
+| 自动翻译 | 关 | 每次识别后自动翻译 |
 
 ## 已知限制
 
@@ -44,7 +46,11 @@ Windows 截图取字工具。按下 **F1**，框选屏幕上任意区域，识�
 
 ## 隐私
 
-识别全程在本机完成，不上传任何图片或文字。唯一的联网请求是检查 GitHub Releases 的最新版本号（只发送程序版本，不发送任何本机信息），可在设置中关闭。
+识别全程在本机完成，不上传图片。
+
+联网行为只有两项，都可以关闭：
+1. **检查更新**：只请求 GitHub Releases 的最新版本号，不发送任何本机信息。
+2. **翻译**（默认关闭）：只有你主动开启并填写 DeepSeek API Key 后才会发生，会把**识别出的文字**发送到 DeepSeek 官方接口 `api.deepseek.com` 进行翻译。API Key 只存在本机 `%APPDATA%\StarHuanOCR\config.json`。
 
 ## 从源码运行
 

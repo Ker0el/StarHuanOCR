@@ -15,7 +15,9 @@ CHIP_DELAY_MS = 150
 class Pipeline(QObject):
     status_changed = Signal(str)
 
-    def __init__(self, config, worker, overlay: OverlayController, window, chip, tray=None) -> None:
+    def __init__(
+        self, config, worker, overlay: OverlayController, window, chip, tray=None, translator=None
+    ) -> None:
         super().__init__()
         self.config: Config = config
         self.worker = worker
@@ -23,6 +25,8 @@ class Pipeline(QObject):
         self.window = window
         self.chip = chip
         self.tray = tray
+        self.translator = translator
+        self._current_text = ""
         self._anchor = QRect()
         self._chip_timer: QTimer | None = None
 
@@ -30,6 +34,10 @@ class Pipeline(QObject):
         overlay.cancelled.connect(self._on_cancel)
         worker.finished.connect(self._on_result)
         worker.failed.connect(self._on_error)
+        window.translate_requested.connect(self.translate_current)
+        if translator is not None:
+            translator.finished.connect(self._on_translated)
+            translator.failed.connect(self._on_translate_failed)
 
     def replace_worker(self, worker) -> None:
         """换引擎（精度/GPU 开关变化）时重建工作线程。"""
@@ -43,6 +51,10 @@ class Pipeline(QObject):
         self.worker = worker
         worker.finished.connect(self._on_result)
         worker.failed.connect(self._on_error)
+        window.translate_requested.connect(self.translate_current)
+        if translator is not None:
+            translator.finished.connect(self._on_translated)
+            translator.failed.connect(self._on_translate_failed)
         worker.start()
 
     # --- 触发 ---
@@ -92,9 +104,35 @@ class Pipeline(QObject):
             return
         if self.config.auto_copy:
             self._copy(text)
+        self._current_text = text
         if self.config.show_result:
             self.window.show_result(text, self._anchor, copied=self.config.auto_copy)
+            available = self._translation_available()
+            self.window.set_translation_available(available)
+            if available and self.config.auto_translate:
+                self.translate_current()
         self.status_changed.emit(f"识别完成 · {result.elapsed_ms} ms · {result.device}")
+
+    # --- 翻译 ---
+    def _translation_available(self) -> bool:
+        return bool(
+            self.translator is not None
+            and self.config.translation_enabled
+            and self.config.deepseek_api_key.strip()
+        )
+
+    def translate_current(self) -> None:
+        text = self._current_text.strip()
+        if not text or not self._translation_available():
+            return
+        self.window.show_translation("翻译中…")
+        self.translator.translate_async(text, self.config.deepseek_api_key.strip())
+
+    def _on_translated(self, translated: str) -> None:
+        self.window.show_translation(translated)
+
+    def _on_translate_failed(self, message: str) -> None:
+        self.window.show_translation(f"翻译失败：{message}")
 
     def _on_error(self, message: str) -> None:
         self._stop_chip()

@@ -91,3 +91,25 @@ def test_settings_shows_author_link(qtbot):
     qtbot.addWidget(w)
     assert "space.bilibili.com/177308205" in w.author_label.text()
     assert w.author_label.openExternalLinks() is True
+
+
+def test_translation_details_hidden_until_enabled(qtbot):
+    w = SettingsWindow()
+    qtbot.addWidget(w)
+    w.open(Config(), "cpu")
+    assert w.translation_details.isHidden() is True
+    w.translation_switch.setChecked(True)
+    assert w.translation_details.isHidden() is False
+
+
+def test_api_key_change_is_saved(qtbot, tmp_path, monkeypatch):
+    from app.ui import settings_window as module
+
+    saved = []
+    monkeypatch.setattr(module, "save_config", lambda cfg, *a, **k: saved.append(cfg.deepseek_api_key))
+    w = module.SettingsWindow()
+    qtbot.addWidget(w)
+    w.open(Config(translation_enabled=True), "cpu")
+    w.api_key_edit.setText("sk-xyz")
+    w.api_key_edit.editingFinished.emit()
+    assert "sk-xyz" in saved

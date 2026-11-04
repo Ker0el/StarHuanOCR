@@ -21,6 +21,7 @@ from app.ocr.engine import (
 )
 from app.overlay import OverlayController
 from app.pipeline import Pipeline
+from app.translate import Translator
 from app.single_instance import SingleInstance
 from app.updater import UpdateChecker
 from app.ui.fonts import app_font, load_app_font
@@ -105,7 +106,8 @@ def main() -> int:
     window = ResultWindow()
     chip = LoadingChip()
     tray = TrayIcon(config.hotkey)
-    pipeline = Pipeline(config, worker, overlay, window, chip, tray)
+    translator = Translator()
+    pipeline = Pipeline(config, worker, overlay, window, chip, tray, translator=translator)
 
     hotkey = HotkeyManager()
     wire_hotkey(hotkey, pipeline)
@@ -141,6 +143,9 @@ def main() -> int:
         config.show_result = updated.show_result
         config.autostart = updated.autostart
         config.check_updates = updated.check_updates
+        config.translation_enabled = updated.translation_enabled
+        config.deepseek_api_key = updated.deepseek_api_key
+        config.auto_translate = updated.auto_translate
         save_config(config)
     settings_window.changed.connect(on_settings_changed)
     settings_window.hotkey_rejected.connect(lambda msg: tray.notify(APP_NAME, f"快捷键无效：{msg}"))

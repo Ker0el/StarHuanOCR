@@ -33,6 +33,7 @@ def _clamp_position(x: int, y: int, w: int, h: int, avail: QRect) -> tuple[int, 
 
 class ResultWindow(QWidget):
     closed = Signal()
+    translate_requested = Signal()
 
     def __init__(self) -> None:
         super().__init__(
@@ -55,6 +56,27 @@ class ResultWindow(QWidget):
             " border: 1px solid rgba(255,255,255,30); border-radius: 8px; padding: 8px; }"
         )
 
+        self.translation_view = QPlainTextEdit()
+        self.translation_view.setReadOnly(True)
+        self.translation_view.setMaximumHeight(96)
+        self.translation_view.setFont(QFont(load_app_font(), RESULT_TEXT_SIZE))
+        self.translation_view.setStyleSheet(
+            "QPlainTextEdit { background: rgba(74,222,128,18); color: #c8f7d8;"
+            " border: 1px solid rgba(74,222,128,60); border-radius: 8px; padding: 6px; }"
+        )
+        self.translation_view.setVisible(False)
+
+        self.translate_button = QPushButton("翻译")
+        self.translate_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.translate_button.setStyleSheet(
+            "QPushButton { background: rgba(76,194,255,28); color: #cdefff;"
+            " border: 1px solid rgba(76,194,255,70); border-radius: 6px;"
+            " padding: 4px 14px; }"
+            "QPushButton:hover { background: rgba(76,194,255,50); }"
+        )
+        self.translate_button.setVisible(False)
+        self.translate_button.clicked.connect(self.translate_requested)
+
         self.copied_label = QLabel(COPIED_HINT)
         self.copied_label.setStyleSheet(f"color: {COPIED_COLOR}; font-size: 12px;")
         self.copied_label.setVisible(False)
@@ -73,6 +95,7 @@ class ResultWindow(QWidget):
         self.close_button.clicked.connect(self.close_window)
 
         buttons = QHBoxLayout()
+        buttons.addWidget(self.translate_button)
         buttons.addWidget(self.copied_label)
         buttons.addStretch(1)
         buttons.addWidget(self.copy_button)
@@ -82,6 +105,7 @@ class ResultWindow(QWidget):
         root.setContentsMargins(12, 12, 12, 12)
         root.setSpacing(8)
         root.addWidget(self.text_edit, 1)
+        root.addWidget(self.translation_view)
         root.addLayout(buttons)
 
     # --- 对外 ---
@@ -89,11 +113,22 @@ class ResultWindow(QWidget):
         self.text_edit.setPlainText(text)
         self.copy_button.setText("复制")
         self.copied_label.setVisible(copied)
+        self.translation_view.setVisible(False)
+        self.translation_view.clear()
         self._place(anchor)
         self.show()
         self.raise_()
         self.activateWindow()
         self.text_edit.setFocus()
+
+    def set_translation_available(self, available: bool) -> None:
+        self.translate_button.setVisible(available)
+
+    def show_translation(self, text: str) -> None:
+        self.translation_view.setPlainText(text)
+        self.translation_view.setVisible(True)
+        self.adjustSize()
+        self.resize(self.width(), max(self.height(), 320))
 
     def copy_text(self) -> None:
         QGuiApplication.clipboard().setText(self.text_edit.toPlainText())
