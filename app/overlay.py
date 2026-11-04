@@ -117,6 +117,8 @@ class OverlayController(QObject):
         super().__init__(parent)
         self._overlays: list[SelectionOverlay] = []
         self._active = False
+        self.desktop: QImage | None = None
+        self.desktop_rect: QRect = QRect()
 
     @property
     def is_active(self) -> bool:
@@ -127,6 +129,8 @@ class OverlayController(QObject):
             return
         desktop = grab_virtual_desktop()
         rect = virtual_desktop_rect()
+        self.desktop = desktop
+        self.desktop_rect = rect
         self._active = True
 
         for screen in QGuiApplication.screens():
