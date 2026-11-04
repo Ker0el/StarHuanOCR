@@ -9,9 +9,9 @@ from PySide6.QtCore import QObject, Signal
 
 from app import APP_VERSION
 
-# 创建仓库后填写；为空则整个功能关闭
-REPO_OWNER = ""
-REPO_NAME = ""
+# 仓库地址；为空则整个功能关闭
+REPO_OWNER = "Ker0el"
+REPO_NAME = "StarHuanOCR"
 
 _UA = f"StarHuanOCR/{APP_VERSION}"
 
