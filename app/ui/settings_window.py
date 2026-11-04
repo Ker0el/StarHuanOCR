@@ -60,6 +60,16 @@ QComboBox QAbstractItemView { background: #262626; color: #f2f2f2; }
 """
 
 
+def make_switch() -> "SwitchButton":
+    switch = SwitchButton()
+    try:
+        switch.setOnText("开")
+        switch.setOffText("关")
+    except Exception:
+        pass
+    return switch
+
+
 class HotkeyEdit(QLineEdit):
     """点入后按键即录制，非法组合回调交给父窗口处理。"""
 
@@ -106,22 +116,22 @@ class SettingsWindow(QWidget):
         self.hotkey_hint = QLabel("支持任意按键与组合键；裸键会接管该键，影响正常输入")
         self.hotkey_hint.setObjectName("hint")
 
-        self.auto_copy_switch = SwitchButton()
-        self.show_result_switch = SwitchButton()
-        self.prefer_gpu_switch = SwitchButton()
-        self.autostart_switch = SwitchButton()
-        self.update_switch = SwitchButton()
+        self.auto_copy_switch = make_switch()
+        self.show_result_switch = make_switch()
+        self.prefer_gpu_switch = make_switch()
+        self.autostart_switch = make_switch()
+        self.update_switch = make_switch()
 
         self.precision_combo = QComboBox()
         self.precision_combo.addItem("自动", "auto")
         self.precision_combo.addItem("快速（small）", "fast")
         self.precision_combo.addItem("高精度（medium）", "high")
 
-        self.translation_switch = SwitchButton()
+        self.translation_switch = make_switch()
         self.api_key_edit = QLineEdit()
         self.api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
         self.api_key_edit.setPlaceholderText("sk-...")
-        self.auto_translate_switch = SwitchButton()
+        self.auto_translate_switch = make_switch()
 
         self.translation_details = QWidget()
         details_form = QFormLayout(self.translation_details)
