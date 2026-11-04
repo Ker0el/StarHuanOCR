@@ -153,6 +153,13 @@ class ResultWindow(QWidget):
         if app is not None:
             app.removeEventFilter(self)
 
+    def event(self, event) -> bool:  # noqa: N802
+        # 点到别的程序/桌面时，本进程收不到鼠标事件，但窗口会失去激活——这才是可靠信号
+        if event.type() == QEvent.Type.WindowDeactivate and self.isVisible():
+            self.close_window()
+            return True
+        return super().event(event)
+
     def eventFilter(self, obj, event) -> bool:  # noqa: N802
         """点到窗口外面就关掉（关闭按钮保持不变）。"""
         if event.type() == QEvent.Type.MouseButtonPress and self.isVisible():

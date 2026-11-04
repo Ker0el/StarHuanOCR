@@ -113,3 +113,15 @@ def test_window_can_be_dragged(qtbot):
                     Qt.KeyboardModifier.NoModifier)
     )
     assert w.pos() != before
+
+
+def test_window_closes_when_deactivated(qtbot):
+    from PySide6.QtCore import QEvent
+    from PySide6.QtWidgets import QApplication
+
+    w = ResultWindow()
+    qtbot.addWidget(w)
+    w.show_result("你好", QRect(200, 200, 120, 40))
+    assert w.isVisible() is True
+    QApplication.sendEvent(w, QEvent(QEvent.Type.WindowDeactivate))
+    assert w.isVisible() is False
