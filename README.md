@@ -203,6 +203,18 @@ D3D 独占全屏和 DRM 内容无法被普通方式截取，这是系统限制�
 
 **星空** · B 站主页：<https://space.bilibili.com/177308205>
 
+## English
+
+**StarHuanOCR** is a lightweight screenshot OCR tool for Windows. Press `F1`, drag a region, and the recognized text is copied to your clipboard instantly with an editable popup.
+
+- Powered by PaddleOCR **PP-OCRv6** via ONNX Runtime — fully offline, no uploads
+- GPU acceleration (CUDA / DirectML) with automatic CPU fallback
+- 50 languages in one model, optional DeepSeek translation
+- Dark acrylic UI, custom hotkey, autostart, single instance
+- GPL-3.0, built with PySide6
+
+*Keywords: screenshot OCR, screen text recognition, image to text, offline OCR, Chinese OCR, Windows OCR, PP-OCRv6, ONNX Runtime.*
+
 ## 许可
 
 [GPL-3.0](LICENSE)
