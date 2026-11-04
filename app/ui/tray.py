@@ -4,10 +4,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import QObject, Signal
-from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPixmap
+from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QMenu, QSystemTrayIcon
 
-ICON_PATH = Path(__file__).resolve().parents[2] / "assets" / "icon.ico"
+from app.ui.icon import load_icon
 
 MENU_STYLE = """
 QMenu { background: #262626; color: #f2f2f2; border: 1px solid rgba(255,255,255,30);
@@ -16,26 +16,6 @@ QMenu::item { padding: 6px 24px 6px 12px; border-radius: 4px; }
 QMenu::item:selected { background: rgba(76,194,255,60); }
 QMenu::separator { height: 1px; background: rgba(255,255,255,25); margin: 4px 8px; }
 """
-
-
-def fallback_icon() -> QIcon:
-    pixmap = QPixmap(32, 32)
-    pixmap.fill(QColor(0, 0, 0, 0))
-    painter = QPainter(pixmap)
-    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-    painter.setBrush(QColor("#4cc2ff"))
-    painter.setPen(QColor("#0b0b0b"))
-    painter.drawRoundedRect(2, 2, 28, 28, 7, 7)
-    painter.setBrush(QColor("#0b0b0b"))
-    painter.drawRoundedRect(8, 10, 16, 12, 3, 3)
-    painter.end()
-    return QIcon(pixmap)
-
-
-def load_icon() -> QIcon:
-    if ICON_PATH.exists():
-        return QIcon(str(ICON_PATH))
-    return fallback_icon()
 
 
 class TrayIcon(QObject):

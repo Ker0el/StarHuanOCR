@@ -23,6 +23,7 @@ from app.overlay import OverlayController
 from app.pipeline import Pipeline
 from app.single_instance import SingleInstance
 from app.updater import UpdateChecker
+from app.ui.icon import load_icon
 from app.ui.result_window import LoadingChip, ResultWindow
 from app.ui.settings_window import SettingsWindow
 from app.ui.theme import apply_dark_theme
@@ -85,6 +86,7 @@ def main() -> int:
     enable_dpi_awareness()
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
+    app.setWindowIcon(load_icon())
 
     instance = SingleInstance()
     if not instance.try_acquire(APP_NAME):

@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.ui.icon import load_icon
 from app.ui.theme import enable_acrylic
 
 WINDOW_WIDTH = 560
@@ -42,6 +43,7 @@ class ResultWindow(QWidget):
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowTitle("星幻OCR")
+        self.setWindowIcon(load_icon())
 
         self.text_edit = QPlainTextEdit()
         self.text_edit.setFont(QFont("Consolas", 10))

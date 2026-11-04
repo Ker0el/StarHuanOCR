@@ -9,12 +9,12 @@ def test_settings_defaults_to_config_hotkey(qtbot):
     assert w.hotkey_edit.text() == "F1"
 
 
-def test_settings_rejects_bare_letter_hotkey(qtbot):
+def test_settings_accepts_bare_letter_hotkey(qtbot):
     w = SettingsWindow()
     qtbot.addWidget(w)
     w.open(Config(hotkey="F1"), "cpu")
     w._apply_hotkey_text("Q")
-    assert w.hotkey_edit.text() == "F1"
+    assert w.hotkey_edit.text() == "Q"
 
 
 def test_hotkey_edit_records_ctrl_letter_via_keycode(qtbot):
@@ -43,3 +43,44 @@ def test_open_does_not_write_autostart(qtbot, monkeypatch):
     qtbot.addWidget(w)
     w.open(Config(autostart=True), "cpu")
     assert calls == []
+
+
+def test_device_label_explains_cpu_fallback():
+    from app.ui.settings_window import device_label_text
+
+    assert device_label_text("cuda", True) == "GPU · CUDA"
+    assert device_label_text("dml", True) == "GPU · DirectML"
+    assert device_label_text("cpu", True) == "CPU（当前运行库不带 GPU 支持）"
+    assert device_label_text("cpu", False) == "CPU（设置里已关闭 GPU）"
+
+
+def test_hotkey_edit_records_printscreen(qtbot):
+    from PySide6.QtCore import QEvent, Qt
+    from PySide6.QtGui import QKeyEvent
+
+    from app.ui.settings_window import HotkeyEdit
+
+    edit = HotkeyEdit()
+    qtbot.addWidget(edit)
+    recorded = []
+    edit.recorded.connect(recorded.append)
+    edit.keyPressEvent(
+        QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Print, Qt.KeyboardModifier.NoModifier, "")
+    )
+    assert recorded == ["PrintScreen"]
+
+
+def test_hotkey_edit_records_ctrl_space(qtbot):
+    from PySide6.QtCore import QEvent, Qt
+    from PySide6.QtGui import QKeyEvent
+
+    from app.ui.settings_window import HotkeyEdit
+
+    edit = HotkeyEdit()
+    qtbot.addWidget(edit)
+    recorded = []
+    edit.recorded.connect(recorded.append)
+    edit.keyPressEvent(
+        QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Space, Qt.KeyboardModifier.ControlModifier, " ")
+    )
+    assert recorded == ["Ctrl+Space"]

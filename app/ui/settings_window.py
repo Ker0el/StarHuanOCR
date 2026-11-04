@@ -18,11 +18,34 @@ from PySide6.QtWidgets import (
 
 from app import APP_NAME, APP_VERSION
 from app.config import Config, save_config
-from app.hotkey import parse_hotkey
+from app.hotkey import (
+    MOD_ALT,
+    MOD_CONTROL,
+    MOD_SHIFT,
+    MOD_WIN,
+    hotkey_to_string,
+    parse_hotkey,
+    qt_key_to_vk,
+)
+from app.ui.icon import load_icon
 from app.ui.theme import enable_acrylic
 from app.winapi import set_autostart
 
 from qfluentwidgets import SwitchButton
+
+DEVICE_LABELS = {
+    "cuda": "GPU · CUDA",
+    "dml": "GPU · DirectML",
+}
+
+
+def device_label_text(device: str, prefer_gpu: bool) -> str:
+    if device in DEVICE_LABELS:
+        return DEVICE_LABELS[device]
+    if prefer_gpu:
+        return "CPU（当前运行库不带 GPU 支持）"
+    return "CPU（设置里已关闭 GPU）"
+
 
 GROUP_STYLE = """
 QFrame#group { background: rgba(255,255,255,8); border: 1px solid rgba(255,255,255,24);
@@ -48,30 +71,22 @@ class HotkeyEdit(QLineEdit):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
     def keyPressEvent(self, event) -> None:  # noqa: N802
-        # 不能依赖 event.text()：Windows 下 Ctrl+字母 的 text() 是控制字符（如 ），
-        # 只有按虚拟键码取名才可靠。
-        key = event.key()
-        parts: list[str] = []
-        mods = event.modifiers()
-        if mods & Qt.KeyboardModifier.ControlModifier:
-            parts.append("Ctrl")
-        if mods & Qt.KeyboardModifier.AltModifier:
-            parts.append("Alt")
-        if mods & Qt.KeyboardModifier.ShiftModifier:
-            parts.append("Shift")
-        if mods & Qt.KeyboardModifier.MetaModifier:
-            parts.append("Win")
-
-        if Qt.Key.Key_F1 <= key <= Qt.Key.Key_F12:
-            parts.append(f"F{key - Qt.Key.Key_F1 + 1}")
-        elif Qt.Key.Key_A <= key <= Qt.Key.Key_Z:
-            parts.append(chr(ord("A") + key - Qt.Key.Key_A))
-        elif Qt.Key.Key_0 <= key <= Qt.Key.Key_9:
-            parts.append(chr(ord("0") + key - Qt.Key.Key_0))
-        else:
+        # 按虚拟键码取值：Windows 下 Ctrl+字母 的 event.text() 是控制字符，
+        # 且 PrintScreen 等键根本没有文本。
+        vk = qt_key_to_vk(event.key(), event.modifiers())
+        if vk is None:
             return
-
-        self.recorded.emit("+".join(parts))
+        mods = 0
+        m = event.modifiers()
+        if m & Qt.KeyboardModifier.ControlModifier:
+            mods |= MOD_CONTROL
+        if m & Qt.KeyboardModifier.AltModifier:
+            mods |= MOD_ALT
+        if m & Qt.KeyboardModifier.ShiftModifier:
+            mods |= MOD_SHIFT
+        if m & Qt.KeyboardModifier.MetaModifier:
+            mods |= MOD_WIN
+        self.recorded.emit(hotkey_to_string(mods, vk))
 
 
 class SettingsWindow(QWidget):
@@ -81,13 +96,14 @@ class SettingsWindow(QWidget):
     def __init__(self) -> None:
         super().__init__(None, Qt.WindowType.Window)
         self.setWindowTitle(f"{APP_NAME} 设置")
+        self.setWindowIcon(load_icon())
         self.setStyleSheet(GROUP_STYLE)
         self.setMinimumWidth(460)
         self._config = Config()
 
         self.hotkey_edit = HotkeyEdit()
         self.hotkey_edit.recorded.connect(self._apply_hotkey_text)
-        self.hotkey_hint = QLabel("最少一个修饰键，或 F1–F12")
+        self.hotkey_hint = QLabel("支持任意按键与组合键；裸键会接管该键，影响正常输入")
         self.hotkey_hint.setObjectName("hint")
 
         self.auto_copy_switch = SwitchButton()
@@ -173,7 +189,7 @@ class SettingsWindow(QWidget):
         self.precision_combo.setCurrentIndex(max(index, 0))
         for widget in widgets:
             widget.blockSignals(False)
-        self.device_label.setText(device.upper())
+        self.device_label.setText(device_label_text(device, settings.prefer_gpu))
         self.show()
         self.raise_()
         self.activateWindow()
