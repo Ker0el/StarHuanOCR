@@ -90,3 +90,26 @@ def test_result_text_uses_larger_font(qtbot):
     w = ResultWindow()
     qtbot.addWidget(w)
     assert w.text_edit.font().pointSize() == RESULT_TEXT_SIZE
+
+
+def test_window_can_be_dragged(qtbot):
+    from PySide6.QtCore import QEvent, QPoint, QPointF
+    from PySide6.QtGui import QMouseEvent
+
+    w = ResultWindow()
+    qtbot.addWidget(w)
+    w.show_result("你好", QRect(200, 200, 120, 40))
+    before = w.pos()
+    press_global = QPointF(w.mapToGlobal(QPoint(10, 10)))
+    w.mousePressEvent(
+        QMouseEvent(QEvent.Type.MouseButtonPress, QPointF(10, 10), press_global,
+                    Qt.MouseButton.LeftButton, Qt.MouseButton.LeftButton,
+                    Qt.KeyboardModifier.NoModifier)
+    )
+    move_global = QPointF(press_global.x() + 60, press_global.y() + 40)
+    w.mouseMoveEvent(
+        QMouseEvent(QEvent.Type.MouseMove, QPointF(70, 50), move_global,
+                    Qt.MouseButton.NoButton, Qt.MouseButton.LeftButton,
+                    Qt.KeyboardModifier.NoModifier)
+    )
+    assert w.pos() != before

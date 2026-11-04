@@ -1,4 +1,4 @@
-param(
+﻿param(
     [switch]$Gpu
 )
 
@@ -25,7 +25,14 @@ if ($Gpu) {
 $Dist = Join-Path $Root "dist\StarHuanOCR"
 if (Test-Path $Dist) {
     Write-Host "==> 清理旧产物 $Dist"
-    Remove-Item $Dist -Recurse -Force
+    try {
+        Remove-Item $Dist -Recurse -Force -ErrorAction Stop
+    } catch {
+        Write-Host "==> 删除失败（可能有进程占用），尝试结束同名进程后重试" -ForegroundColor Yellow
+        Get-Process StarHuanOCR -ErrorAction SilentlyContinue | Stop-Process -Force
+        Start-Sleep -Seconds 2
+        Remove-Item $Dist -Recurse -Force -ErrorAction Stop
+    }
 }
 
 Write-Host "==> PyInstaller"
