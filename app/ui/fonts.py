@@ -5,6 +5,8 @@ from pathlib import Path
 
 FONT_PATH = Path(__file__).resolve().parents[2] / "assets" / "fonts" / "NotoSansSC-VF.ttf"
 FALLBACK_FAMILY = "Microsoft YaHei"
+APP_FONT_SIZE = 11
+RESULT_TEXT_SIZE = 12
 
 
 def load_app_font() -> str:

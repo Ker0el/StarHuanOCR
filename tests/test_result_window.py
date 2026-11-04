@@ -41,3 +41,52 @@ def test_copy_button_shows_hint(qtbot):
     w.show_result("你好", QRect(0, 0, 10, 10), copied=False)
     w.copy_text()
     assert w.copied_label.isHidden() is False
+
+
+def test_click_outside_closes_window(qtbot):
+    from PySide6.QtCore import QEvent, QPointF
+    from PySide6.QtGui import QMouseEvent
+
+    w = ResultWindow()
+    qtbot.addWidget(w)
+    w.show_result("你好", QRect(200, 200, 120, 40))
+    inside = w.geometry()
+    outside = QPointF(inside.right() + 200, inside.bottom() + 200)
+    event = QMouseEvent(
+        QEvent.Type.MouseButtonPress,
+        QPointF(5, 5),
+        outside,
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    w.eventFilter(w, event)
+    assert w.isVisible() is False
+
+
+def test_click_inside_keeps_window(qtbot):
+    from PySide6.QtCore import QEvent, QPointF
+    from PySide6.QtGui import QMouseEvent
+
+    w = ResultWindow()
+    qtbot.addWidget(w)
+    w.show_result("你好", QRect(200, 200, 120, 40))
+    local = QPointF(10, 10)
+    event = QMouseEvent(
+        QEvent.Type.MouseButtonPress,
+        local,
+        QPointF(w.geometry().topLeft()) + local,
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    w.eventFilter(w, event)
+    assert w.isVisible() is True
+
+
+def test_result_text_uses_larger_font(qtbot):
+    from app.ui.fonts import RESULT_TEXT_SIZE
+
+    w = ResultWindow()
+    qtbot.addWidget(w)
+    assert w.text_edit.font().pointSize() == RESULT_TEXT_SIZE

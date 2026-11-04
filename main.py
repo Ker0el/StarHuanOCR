@@ -24,7 +24,7 @@ from app.overlay import OverlayController
 from app.pipeline import Pipeline
 from app.single_instance import SingleInstance
 from app.updater import UpdateChecker
-from app.ui.fonts import load_app_font
+from app.ui.fonts import APP_FONT_SIZE, load_app_font
 from app.ui.icon import load_icon
 from app.ui.result_window import LoadingChip, ResultWindow
 from app.ui.settings_window import SettingsWindow
@@ -91,7 +91,7 @@ def main() -> int:
     app.setWindowIcon(load_icon())
     family = load_app_font()
     app.setProperty("app_font_family", family)
-    app.setFont(QFont(family, 10))
+    app.setFont(QFont(family, APP_FONT_SIZE))
 
     instance = SingleInstance()
     if not instance.try_acquire(APP_NAME):

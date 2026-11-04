@@ -1,7 +1,7 @@
 """结果窗口与识别中的等待胶囊。"""
 from __future__ import annotations
 
-from PySide6.QtCore import QRect, QRectF, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QRect, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QGuiApplication, QPainter, QPen
 from PySide6.QtWidgets import (
     QHBoxLayout,
@@ -46,9 +46,9 @@ class ResultWindow(QWidget):
         self.setWindowIcon(load_icon())
 
         self.text_edit = QPlainTextEdit()
-        from app.ui.fonts import load_app_font
+        from app.ui.fonts import RESULT_TEXT_SIZE, load_app_font
 
-        self.text_edit.setFont(QFont(load_app_font(), 10))
+        self.text_edit.setFont(QFont(load_app_font(), RESULT_TEXT_SIZE))
         self.text_edit.setPlaceholderText("未识别到文字")
         self.text_edit.setStyleSheet(
             "QPlainTextEdit { background: rgba(0,0,0,90); color: #f2f2f2;"
@@ -128,6 +128,26 @@ class ResultWindow(QWidget):
     def showEvent(self, event) -> None:  # noqa: N802
         super().showEvent(event)
         enable_acrylic(self)
+        app = QGuiApplication.instance()
+        if app is not None:
+            app.installEventFilter(self)
+
+    def hideEvent(self, event) -> None:  # noqa: N802
+        super().hideEvent(event)
+        app = QGuiApplication.instance()
+        if app is not None:
+            app.removeEventFilter(self)
+
+    def eventFilter(self, obj, event) -> bool:  # noqa: N802
+        """点到窗口外面就关掉（关闭按钮保持不变）。"""
+        if event.type() == QEvent.Type.MouseButtonPress and self.isVisible():
+            try:
+                global_pos = event.globalPosition().toPoint()
+            except AttributeError:
+                return False
+            if not self.geometry().contains(global_pos):
+                self.close_window()
+        return super().eventFilter(obj, event)
 
     def keyPressEvent(self, event) -> None:  # noqa: N802
         if event.key() == Qt.Key.Key_Escape:
