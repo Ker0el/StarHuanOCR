@@ -6,7 +6,6 @@ import sys
 import time
 
 from PySide6.QtCore import QTimer
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication
 
 from app import APP_NAME, APP_VERSION
@@ -24,7 +23,7 @@ from app.overlay import OverlayController
 from app.pipeline import Pipeline
 from app.single_instance import SingleInstance
 from app.updater import UpdateChecker
-from app.ui.fonts import APP_FONT_SIZE, load_app_font
+from app.ui.fonts import app_font, load_app_font
 from app.ui.icon import load_icon
 from app.ui.result_window import LoadingChip, ResultWindow
 from app.ui.settings_window import SettingsWindow
@@ -91,7 +90,7 @@ def main() -> int:
     app.setWindowIcon(load_icon())
     family = load_app_font()
     app.setProperty("app_font_family", family)
-    app.setFont(QFont(family, APP_FONT_SIZE))
+    app.setFont(app_font())
 
     instance = SingleInstance()
     if not instance.try_acquire(APP_NAME):

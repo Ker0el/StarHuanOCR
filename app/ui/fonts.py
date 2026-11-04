@@ -23,3 +23,12 @@ def load_app_font() -> str:
         return families[0] if families else FALLBACK_FAMILY
     except Exception:
         return FALLBACK_FAMILY
+
+
+def app_font():
+    """界面统一字体：思源黑体 Medium——小字号下比 Regular 更扎实。"""
+    from PySide6.QtGui import QFont
+
+    font = QFont(load_app_font(), APP_FONT_SIZE)
+    font.setWeight(QFont.Weight.Medium)
+    return font
