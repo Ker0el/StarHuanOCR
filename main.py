@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import ctypes
 import sys
+import time
 
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 
-from app import APP_NAME
+from app import APP_NAME, APP_VERSION
 from app.config import load_config, save_config
 from app.hotkey import HotkeyManager
 from app.ocr.engine import (
@@ -20,6 +22,7 @@ from app.ocr.engine import (
 from app.overlay import OverlayController
 from app.pipeline import Pipeline
 from app.single_instance import SingleInstance
+from app.updater import UpdateChecker
 from app.ui.result_window import LoadingChip, ResultWindow
 from app.ui.settings_window import SettingsWindow
 from app.ui.theme import apply_dark_theme
@@ -40,6 +43,28 @@ def build_engine(config) -> OcrEngine:
     device = choose_device(config.prefer_gpu, available_providers())
     tier = choose_tier(config.precision, device)
     return OcrEngine(DEFAULT_MODELS_DIR, device=device, tier=tier)
+
+
+def selftest() -> int:
+    """打包后验证模型与推理引擎能加载：写 selftest.txt 并返回退出码。"""
+    from pathlib import Path
+
+    out = Path(sys.executable).with_name("selftest.txt")
+    try:
+        device = choose_device(True, available_providers())
+        tier = choose_tier("fast", device)
+        engine = OcrEngine(DEFAULT_MODELS_DIR, device=device, tier=tier)
+        engine.warmup()
+        result = f"ok device={engine.device} tier={engine.tier}"
+        code = 0
+    except Exception as exc:
+        result = f"failed: {exc!r}"
+        code = 1
+    try:
+        out.write_text(result, encoding="utf-8")
+    except OSError:
+        pass
+    return code
 
 
 def main() -> int:
@@ -111,6 +136,22 @@ def main() -> int:
         config.first_run_done = True
         save_config(config)
 
+    checker = UpdateChecker()
+    checker.found.connect(
+        lambda tag: tray.notify(APP_NAME, f"发现新版本 {tag}，可在 GitHub Releases 查看。", 6000)
+    )
+
+    def maybe_check_updates() -> None:
+        if not config.check_updates:
+            return
+        if time.time() - config.last_update_check < 86400:
+            return
+        config.last_update_check = time.time()
+        save_config(config)
+        checker.check_async(APP_VERSION)
+
+    QTimer.singleShot(10_000, maybe_check_updates)
+
     app.aboutToQuit.connect(worker.stop)
     exit_code = app.exec()
     hotkey.unregister()
@@ -119,4 +160,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if "--selftest" in sys.argv:
+        raise SystemExit(selftest())
     raise SystemExit(main())

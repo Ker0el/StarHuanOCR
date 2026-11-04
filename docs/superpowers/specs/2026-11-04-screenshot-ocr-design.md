@@ -29,7 +29,7 @@
 | 授权 | **开源，GPL-3.0** | 用户已定开源；PyQt-Fluent-Widgets 为 GPLv3，开源即天然合规 |
 | 发布形态 | 绿色免安装 zip（主）+ 可选安装包 | 免安装最省事；不做代码签名，SmartScreen 首次会提示 |
 | 更新 | 启动后静默查 GitHub Release 版本号，有新版提醒并可一键打开下载页 | 用户已定；只比对版本，不自动替换文件 |
-| 构建 | 标准版（CPU）+ GPU 版（DirectML）两个 release 资产，体积差约 10 MB | GPU 版免装 CUDA、A/N/I 通吃；见 §12 |
+| 构建 | 标准版（CPU）+ GPU 版（DirectML）两个 release 资产 | GPU 版免装 CUDA、A/N/I 通吃；实测包体约 520 MB；见 §12 |
 
 ## 3. 目标 / 非目标 / 反目标
 
@@ -121,7 +121,7 @@ D:\444\
 3. **截图**：`BitBlt` + `CAPTUREBLT`（Qt `QScreen.grabWindow(0)`）。**已知限制**：D3D 独占全屏 / 受保护内容（部分播放器、DRM）会黑屏——写进说明，不做绕过。
 4. **引擎**：PaddleOCR 非线程安全，单工作线程 + `queue.Queue` 串行；结果经 Qt signal 回 UI。启动后空闲时用 32×32 空白图预热，把首帧 1–3 s 藏到用户看不见的地方。
 5. **模型离线**：把 PP-OCRv6 small/medium 的 ONNX 文件预置到 `models\`，用 `Det.model_path` / `Rec.model_path` 指向本地文件，确保运行期零下载。
-6. **打包**：onedir，`--collect-all onnxruntime --collect-all rapidocr`，剔冗余；目标 **150–250 MB**（vs 原 Paddle 方案 400–600 MB）。GPU 版只换 onnxruntime 的那一个包。
+6. **打包**：onedir，`--collect-all onnxruntime --collect-all rapidocr`，剔除 rapidocr wheel 里自带的全部语言模型；**实测 523 MB**（models 163 + cv2 112 + PySide6 110 + 其余）。原估的 150–250 MB 在 Qt+OpenCV 下不成立。GPU 版只换 onnxruntime 那一个包。
 7. **单实例**：`QLocalServer`，第二实例转发参数后退出。
 
 ## 9. 验收
@@ -157,7 +157,7 @@ PySide6 小版本、亚克力实现方式（`AcrylicWindow` 或自绘 DWM blur-b
 | 产物 | 内容 | 目标用户 |
 |---|---|---|
 | `StarHuanOCR-CPU.zip` | PySide6 + onnxruntime + PP-OCRv6 small | 默认下载 |
-| `StarHuanOCR-GPU.zip` | 同上 + onnxruntime-directml（+10 MB） | 任何 DX12 显卡（N/A/I 通吃），免装 CUDA |
+| `StarHuanOCR-GPU.zip` | 同上，onnxruntime 换成 onnxruntime-directml | 任何 DX12 显卡（N/A/I 通吃），免装 CUDA |
 
 GPU 路径三级，全部在运行时自动探测，用户无需配置：
 
@@ -180,4 +180,4 @@ DirectML 已被微软标记为向 Windows ML 过渡的弃用项（ORT 停在 1.2
 - 隐私：请求只带 User-Agent 与默认 TLS，不发送任何本机信息；README 明写「检查更新是唯一联网行为，可在设置关闭」。
 - `<OWNER>/<REPO>` 以常量形式集中在一处，创建仓库后填写；未填写时检查功能整体关闭。
 
-**分发注意**：GitHub Release 的单个文件上限 2 GB，CPU 版预计 300–400 MB，无需分卷。模型随包分发，首次启动不下载。
+**分发注意**：GitHub Release 单个文件上限 2 GB，实测 CPU 版约 520 MB（压缩后约 250 MB），无需分卷。模型随包分发，首次启动不下载。

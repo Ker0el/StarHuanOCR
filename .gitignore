@@ -2,7 +2,7 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-build/
+build/work/
 dist/
 .superpowers/
 models/*.onnx
