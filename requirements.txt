@@ -1,0 +1,8 @@
+PySide6==6.8.3
+PyQt-Fluent-Widgets==1.11.3
+rapidocr==3.10.0
+onnxruntime==1.31.1
+numpy
+opencv-python-headless
+pytest
+pytest-qt
