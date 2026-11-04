@@ -93,7 +93,7 @@ class Pipeline(QObject):
         if self.config.auto_copy:
             self._copy(text)
         if self.config.show_result:
-            self.window.show_result(text, self._anchor)
+            self.window.show_result(text, self._anchor, copied=self.config.auto_copy)
         self.status_changed.emit(f"识别完成 · {result.elapsed_ms} ms · {result.device}")
 
     def _on_error(self, message: str) -> None:

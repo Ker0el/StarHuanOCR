@@ -5,6 +5,7 @@ from PySide6.QtCore import QRect, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QGuiApplication, QPainter, QPen
 from PySide6.QtWidgets import (
     QHBoxLayout,
+    QLabel,
     QPlainTextEdit,
     QPushButton,
     QVBoxLayout,
@@ -19,6 +20,8 @@ GAP = 8
 BACKGROUND = QColor(32, 32, 32, 235)
 BORDER = QColor(255, 255, 255, 28)
 ACCENT = QColor("#4cc2ff")
+COPIED_HINT = "√ 已复制到剪贴板"
+COPIED_COLOR = "#4ade80"
 
 
 def _clamp_position(x: int, y: int, w: int, h: int, avail: QRect) -> tuple[int, int]:
@@ -48,6 +51,10 @@ class ResultWindow(QWidget):
             " border: 1px solid rgba(255,255,255,30); border-radius: 8px; padding: 8px; }"
         )
 
+        self.copied_label = QLabel(COPIED_HINT)
+        self.copied_label.setStyleSheet(f"color: {COPIED_COLOR}; font-size: 12px;")
+        self.copied_label.setVisible(False)
+
         self.copy_button = QPushButton("复制")
         self.close_button = QPushButton("关闭")
         for btn in (self.copy_button, self.close_button):
@@ -62,6 +69,7 @@ class ResultWindow(QWidget):
         self.close_button.clicked.connect(self.close_window)
 
         buttons = QHBoxLayout()
+        buttons.addWidget(self.copied_label)
         buttons.addStretch(1)
         buttons.addWidget(self.copy_button)
         buttons.addWidget(self.close_button)
@@ -73,9 +81,10 @@ class ResultWindow(QWidget):
         root.addLayout(buttons)
 
     # --- 对外 ---
-    def show_result(self, text: str, anchor: QRect) -> None:
+    def show_result(self, text: str, anchor: QRect, copied: bool = False) -> None:
         self.text_edit.setPlainText(text)
         self.copy_button.setText("复制")
+        self.copied_label.setVisible(copied)
         self._place(anchor)
         self.show()
         self.raise_()
@@ -85,6 +94,7 @@ class ResultWindow(QWidget):
     def copy_text(self) -> None:
         QGuiApplication.clipboard().setText(self.text_edit.toPlainText())
         self.copy_button.setText("已复制")
+        self.copied_label.setVisible(True)
 
     def close_window(self) -> None:
         self.hide()
