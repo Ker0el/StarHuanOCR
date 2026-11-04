@@ -50,4 +50,6 @@ def crop_to_numpy(image: QImage, rect_in_image: QRect) -> np.ndarray:
         return np.empty((0, 0, 3), dtype=np.uint8)
     buffer = np.frombuffer(cropped.constBits(), dtype=np.uint8, count=cropped.sizeInBytes())
     rows = buffer.reshape(height, cropped.bytesPerLine())
-    return np.ascontiguousarray(rows[:, : width * 3]).reshape(height, width, 3)
+    # 必须显式 copy：cropped 是局部 QImage，函数返回后其缓冲区会被释放，
+    # 直接返回视图会让调用方读到已释放内存（表现为 OCR 乱码或访问冲突）。
+    return np.array(rows[:, : width * 3], dtype=np.uint8, copy=True).reshape(height, width, 3)
