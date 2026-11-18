@@ -45,7 +45,12 @@ Windows 截图 OCR 工具 · 中文离线识别 · 免费开源
 
 ## 下载安装
 
-到 [Releases](../../releases) 下载 `StarHuanOCR_Setup_v*.exe`，双击安装，**无需管理员权限**，默认装到 `%LOCALAPPDATA%\Programs\星幻OCR`，带桌面快捷方式与卸载项。
+到 [Releases](../../releases) 选对应安装包，双击安装，**无需管理员权限**，默认装到 `%LOCALAPPDATA%\Programs\星幻OCR`，带桌面快捷方式与卸载项。
+
+| 安装包 | 适用 | 说明 |
+|---|---|---|
+| `StarHuanOCR_Setup_v*.exe` | 所有 64 位 Windows 10 1809+ / 11 | CPU 版，无显卡要求，最通用 |
+| `StarHuanOCR_Setup_v*_gpu.exe` | 有 DX12 显卡（Win10 1903+） | DirectML 版，免装 CUDA，N 卡 / A 卡 / Intel 核显均可加速 |
 
 也可以直接用绿色版：解压后双击 `StarHuanOCR.exe`。
 
