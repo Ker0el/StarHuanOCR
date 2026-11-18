@@ -17,7 +17,7 @@ class Config:
     show_result: bool = True
     prefer_gpu: bool = True
     precision: str = "auto"
-    autostart: bool = False
+    autostart: bool = True
     check_updates: bool = True
     last_update_check: float = 0.0
     latest_known_version: str = ""

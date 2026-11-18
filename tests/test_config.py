@@ -6,6 +6,8 @@ def test_load_config_returns_defaults_when_file_missing(tmp_path):
     assert cfg.hotkey == "F1"
     assert cfg.auto_copy is True
     assert cfg.precision == "auto"
+    assert cfg.autostart is True
+    assert cfg.check_updates is True
 
 
 def test_save_then_load_roundtrip(tmp_path):

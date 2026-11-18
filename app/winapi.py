@@ -37,6 +37,24 @@ def set_autostart(enabled: bool, exe_path: str | None = None) -> None:
         pass
 
 
+def read_autostart() -> str | None:
+    """返回注册表里的自启命令；没有条目时返回 None。"""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, AUTOSTART_KEY) as key:
+            value, _ = winreg.QueryValueEx(key, AUTOSTART_VALUE)
+            return str(value)
+    except OSError:
+        return None
+
+
+def sync_autostart(enabled: bool, exe_path: str | None = None) -> None:
+    """让注册表与配置保持一致；换了安装目录时顺带刷新命令路径。"""
+    desired = autostart_command(exe_path) if enabled else None
+    if read_autostart() == desired:
+        return
+    set_autostart(enabled, exe_path)
+
+
 def is_autostart_enabled() -> bool:
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, AUTOSTART_KEY) as key:

@@ -24,6 +24,7 @@ from app.pipeline import Pipeline
 from app.translate import Translator
 from app.single_instance import SingleInstance
 from app.updater import UpdateChecker
+from app.winapi import sync_autostart
 from app.ui.fonts import app_font, load_app_font
 from app.ui.icon import load_icon
 from app.ui.result_window import LoadingChip, ResultWindow
@@ -100,6 +101,8 @@ def main() -> int:
     apply_dark_theme()
     config = load_config()
     config.hotkey = resolve_hotkey(config.hotkey)
+    if getattr(sys, "frozen", False):
+        sync_autostart(config.autostart)
 
     worker = OcrWorker(lambda: build_engine(config))
     overlay = OverlayController()

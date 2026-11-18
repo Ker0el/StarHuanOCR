@@ -2,7 +2,7 @@
 ; 编译：ISCC.exe build\StarHuanOCR.iss   （Git Bash 下需 MSYS_NO_PATHCONV=1）
 
 #define MyAppName "星幻OCR"
-#define MyAppVersion "0.1.0"
+#define MyAppVersion "0.1.1"
 #define MyAppPublisher "星空"
 #define MyAppURL "https://space.bilibili.com/177308205"
 #define MyAppExeName "StarHuanOCR.exe"
